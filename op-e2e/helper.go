@@ -2,6 +2,7 @@ package op_e2e
 
 import (
 	"flag"
+	opservice "github.com/ethereum-optimism/optimism/op-service"
 	"os"
 	"testing"
 
@@ -24,6 +25,7 @@ func init() {
 	if os.Getenv("OP_E2E_DISABLE_PARALLEL") == "true" {
 		enableParallelTesting = false
 	}
+	opservice.ForBSC = false
 }
 
 func InitParallel(t *testing.T) {
@@ -34,4 +36,5 @@ func InitParallel(t *testing.T) {
 	if !verboseGethNodes {
 		log.Root().SetHandler(log.DiscardHandler())
 	}
+	opservice.ForBSC = false
 }
