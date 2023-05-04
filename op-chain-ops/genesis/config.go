@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	opservice "github.com/ethereum-optimism/optimism/op-service"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -430,8 +431,10 @@ func NewL2StorageConfig(config *DeployConfig, block *types.Block) (state.Storage
 	if block.Number() == nil {
 		return storage, errors.New("block number not set")
 	}
-	if block.BaseFee() == nil {
-		return storage, errors.New("block base fee not set")
+	if !opservice.ForBSC {
+		if block.BaseFee() == nil {
+			return storage, errors.New("block base fee not set")
+		}
 	}
 
 	storage["L2ToL1MessagePasser"] = state.StorageValues{
@@ -452,6 +455,10 @@ func NewL2StorageConfig(config *DeployConfig, block *types.Block) (state.Storage
 		"batcherHash":    config.BatchSenderAddress.Hash(),
 		"l1FeeOverhead":  config.GasPriceOracleOverhead,
 		"l1FeeScalar":    config.GasPriceOracleScalar,
+	}
+	if opservice.ForBSC {
+		// only used when init l2 genesis
+		storage["L1Block"]["basefee"] = big.NewInt(5000000000)
 	}
 	storage["LegacyERC20ETH"] = state.StorageValues{
 		"_name":   "Ether",
