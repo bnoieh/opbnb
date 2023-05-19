@@ -153,12 +153,17 @@ func (s *L2Client) SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (
 		return ref.(eth.SystemConfig), nil
 	}
 
+	s.log.Debug("systemconfig: before get block by hash")
 	payload, err := s.PayloadByHash(ctx, hash)
+	s.log.Debug("systemconfig: after get block by hash")
+
 	if err != nil {
 		// w%: wrap to preserve ethereum.NotFound case
 		return eth.SystemConfig{}, fmt.Errorf("failed to determine block-hash of hash %v, could not get payload: %w", hash, err)
 	}
+	s.log.Debug("systemconfig: before payload to config")
 	cfg, err := derive.PayloadToSystemConfig(payload, s.rollupCfg)
+	s.log.Debug("systemconfig: after payload to config")
 	if err != nil {
 		return eth.SystemConfig{}, err
 	}

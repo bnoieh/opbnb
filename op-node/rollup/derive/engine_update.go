@@ -118,16 +118,23 @@ func StartPayload(ctx context.Context, eng Engine, fc eth.ForkchoiceState, attrs
 // If updateSafe is true, then the payload will also be recognized as safe-head at the same time.
 // The severity of the error is distinguished to determine whether the payload was valid and can become canonical.
 func ConfirmPayload(ctx context.Context, log log.Logger, eng Engine, fc eth.ForkchoiceState, id eth.PayloadID, updateSafe bool) (out *eth.ExecutionPayload, errTyp BlockInsertionErrType, err error) {
+	log.Debug("before call engine api get payload")
 	payload, err := eng.GetPayload(ctx, id)
+	log.Debug("after call engine api get payload")
 	if err != nil {
 		// even if it is an input-error (unknown payload ID), it is temporary, since we will re-attempt the full payload building, not just the retrieval of the payload.
 		return nil, BlockInsertTemporaryErr, fmt.Errorf("failed to get execution payload: %w", err)
 	}
+	log.Debug("before check payload")
 	if err := sanityCheckPayload(payload); err != nil {
 		return nil, BlockInsertPayloadErr, err
 	}
+	log.Debug("after check payload")
 
+	log.Debug("before call engine api new payload")
 	status, err := eng.NewPayload(ctx, payload)
+	log.Debug("after call engine api new payload")
+
 	if err != nil {
 		return nil, BlockInsertTemporaryErr, fmt.Errorf("failed to insert execution payload: %w", err)
 	}
@@ -142,7 +149,9 @@ func ConfirmPayload(ctx context.Context, log log.Logger, eng Engine, fc eth.Fork
 	if updateSafe {
 		fc.SafeBlockHash = payload.BlockHash
 	}
+	log.Debug("before call engine api fork choice")
 	fcRes, err := eng.ForkchoiceUpdate(ctx, &fc, nil)
+	log.Debug("after call engine api fork choice")
 	if err != nil {
 		var inputErr eth.InputError
 		if errors.As(err, &inputErr) {

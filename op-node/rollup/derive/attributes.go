@@ -58,7 +58,9 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 
 	var gasPrice *big.Int
 	if opservice.ForBSC {
+		fmt.Println("before get average gas price")
 		gasPrice, err = ba.prepareAverageGasPrice(ctx, epoch)
+		fmt.Println("after get average gas price")
 		if err != nil {
 			return nil, NewTemporaryError(fmt.Errorf("failed to prepare average gas price: %w", err))
 		}
@@ -68,7 +70,9 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 	// case we need to fetch all transaction receipts from the L1 origin block so we can scan for
 	// user deposits.
 	if l2Parent.L1Origin.Number != epoch.Number {
+		fmt.Println("before fetch receipts")
 		info, receipts, err := ba.l1.FetchReceipts(ctx, epoch.Hash)
+		fmt.Println("after fetch receipts")
 		if err != nil {
 			return nil, NewTemporaryError(fmt.Errorf("failed to fetch L1 block info and receipts: %w", err))
 		}
@@ -97,7 +101,9 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 		if l2Parent.L1Origin.Hash != epoch.Hash {
 			return nil, NewResetError(fmt.Errorf("cannot create new block with L1 origin %s in conflict with L1 origin %s", epoch, l2Parent.L1Origin))
 		}
+		fmt.Println("before get info by hash")
 		info, err := ba.l1.InfoByHash(ctx, epoch.Hash)
+		fmt.Println("after get info by hash")
 		if err != nil {
 			return nil, NewTemporaryError(fmt.Errorf("failed to fetch L1 block info: %w", err))
 		}

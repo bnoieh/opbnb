@@ -64,7 +64,9 @@ func (d *Sequencer) StartBuildingBlock(ctx context.Context) error {
 	l2Head := d.engine.UnsafeL2Head()
 
 	// Figure out which L1 origin block we're going to be building on top of.
+	d.log.Debug("before find l1 origin")
 	l1Origin, err := d.l1OriginSelector.FindL1Origin(ctx, l2Head)
+	d.log.Debug("after find l1 origin")
 	if err != nil {
 		d.log.Error("Error finding next L1 Origin", "err", err)
 		return err
@@ -204,6 +206,7 @@ func (d *Sequencer) RunNextSequencerAction(ctx context.Context) (*eth.ExecutionP
 			d.nextAction = d.timeNow().Add(time.Second * time.Duration(d.config.BlockTime))
 			return nil, nil
 		}
+		d.log.Debug("start complete block")
 		payload, err := d.CompleteBuildingBlock(ctx)
 		if err != nil {
 			if errors.Is(err, derive.ErrCritical) {
