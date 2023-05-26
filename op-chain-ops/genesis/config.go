@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	opservice "github.com/ethereum-optimism/optimism/op-service"
 	"math/big"
 	"os"
 	"path/filepath"
+
+	opservice "github.com/ethereum-optimism/optimism/op-service"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -458,7 +459,7 @@ func NewL2StorageConfig(config *DeployConfig, block *types.Block) (state.Storage
 	}
 	if opservice.ForBSC {
 		// only used when init l2 genesis
-		storage["L1Block"]["basefee"] = big.NewInt(5000000000)
+		storage["L1Block"]["basefee"] = big.NewInt(3000000000)
 	}
 	storage["LegacyERC20ETH"] = state.StorageValues{
 		"_name":   "Ether",

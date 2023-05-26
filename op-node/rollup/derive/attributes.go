@@ -141,7 +141,7 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 	}, nil
 }
 
-var bscDefaultGasPrice = big.NewInt(5000000000)
+var bscDefaultGasPrice = big.NewInt(3000000000)
 
 func (ba *FetchingAttributesBuilder) prepareAverageGasPrice(ctx context.Context, epoch eth.BlockID) (*big.Int, error) {
 	_, txs, err := ba.l1.InfoAndTxsByHash(ctx, epoch.Hash)
