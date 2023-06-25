@@ -23,6 +23,7 @@ type L1ReceiptsFetcher interface {
 
 type SystemConfigL2Fetcher interface {
 	SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (eth.SystemConfig, error)
+	CacheSystemConfigByL2Hash(hash common.Hash, config eth.SystemConfig)
 }
 
 // FetchingAttributesBuilder fetches inputs for the building of L2 payload attributes on the fly.
@@ -128,4 +129,13 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 		NoTxPool:              true,
 		GasLimit:              (*eth.Uint64Quantity)(&sysConfig.GasLimit),
 	}, nil
+}
+
+func (ba *FetchingAttributesBuilder) CacheSystemConfig(payload *eth.ExecutionPayload) error {
+	systemConfig, err := PayloadToSystemConfig(payload, ba.cfg)
+	if err != nil {
+		return err
+	}
+	ba.l2.CacheSystemConfigByL2Hash(payload.BlockHash, systemConfig)
+	return nil
 }

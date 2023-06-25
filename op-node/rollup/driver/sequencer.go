@@ -227,6 +227,10 @@ func (d *Sequencer) RunNextSequencerAction(ctx context.Context) (*eth.ExecutionP
 			return nil, nil
 		} else {
 			d.log.Info("sequencer successfully built a new block", "block", payload.ID(), "time", uint64(payload.Timestamp), "txs", len(payload.Transactions))
+			err := d.attrBuilder.CacheSystemConfig(payload)
+			if err != nil {
+				d.log.Error("sequencer cache system config", "err", err)
+			}
 			return payload, nil
 		}
 	} else {
