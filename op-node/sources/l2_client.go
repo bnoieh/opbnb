@@ -149,11 +149,9 @@ func (s *L2Client) L2BlockRefByHash(ctx context.Context, hash common.Hash) (eth.
 // SystemConfigByL2Hash returns the [eth.SystemConfig] (matching the config updates up to and including the L1 origin) for the given L2 block hash.
 // The returned [eth.SystemConfig] may not be in the canonical chain when the hash is not canonical.
 func (s *L2Client) SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (eth.SystemConfig, error) {
-	cachedSystemConfig := eth.SystemConfig{}
 	if ref, ok := s.systemConfigsCache.Get(hash); ok {
-		cachedSystemConfig = ref.(eth.SystemConfig)
-		fmt.Printf("hit-cache %v", cachedSystemConfig)
-		// return ref.(eth.SystemConfig), nil
+		fmt.Println("get system config by l2 hash hit cache")
+		return ref.(eth.SystemConfig), nil
 	}
 
 	payload, err := s.PayloadByHash(ctx, hash)
@@ -166,19 +164,10 @@ func (s *L2Client) SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (
 		return eth.SystemConfig{}, err
 	}
 
-	fmt.Printf("cached system config: %v", cachedSystemConfig)
-	fmt.Printf("system config: %v", cfg)
-	if cachedSystemConfig != (eth.SystemConfig{}) {
-		if cfg == cachedSystemConfig {
-			fmt.Println("cache-right")
-		}
-	}
-
 	s.systemConfigsCache.Add(hash, cfg)
 	return cfg, nil
 }
 
 func (s *L2Client) CacheSystemConfigByL2Hash(hash common.Hash, systemConfig eth.SystemConfig) {
 	s.systemConfigsCache.Add(hash, systemConfig)
-	fmt.Printf("cache system config hash %v config %v", hash, systemConfig)
 }
