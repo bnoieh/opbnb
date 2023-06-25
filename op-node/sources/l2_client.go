@@ -152,6 +152,7 @@ func (s *L2Client) SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (
 	cachedSystemConfig := eth.SystemConfig{}
 	if ref, ok := s.systemConfigsCache.Get(hash); ok {
 		cachedSystemConfig = ref.(eth.SystemConfig)
+		fmt.Printf("hit-cache %v", cachedSystemConfig)
 		// return ref.(eth.SystemConfig), nil
 	}
 
@@ -168,7 +169,6 @@ func (s *L2Client) SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (
 	fmt.Printf("cached system config: %v", cachedSystemConfig)
 	fmt.Printf("system config: %v", cfg)
 	if cachedSystemConfig != (eth.SystemConfig{}) {
-		fmt.Println("hit-cache")
 		if cfg == cachedSystemConfig {
 			fmt.Println("cache-right")
 		}
