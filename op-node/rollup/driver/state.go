@@ -23,7 +23,7 @@ import (
 type SyncStatus = eth.SyncStatus
 
 // sealingDuration defines the expected time it takes to seal the block
-const sealingDuration = time.Millisecond * 50
+const sealingDuration = time.Millisecond * 350
 
 type Driver struct {
 	l1State L1StateIface
@@ -243,6 +243,7 @@ func (s *Driver) eventLoop() {
 
 		select {
 		case <-sequencerCh:
+			s.log.Debug("================sequencerCh start=================")
 			payload, err := s.sequencer.RunNextSequencerAction(ctx)
 			if err != nil {
 				s.log.Error("Sequencer critical error", "err", err)
@@ -257,7 +258,9 @@ func (s *Driver) eventLoop() {
 				}
 			}
 			planSequencerAction() // schedule the next sequencer action to keep the sequencing looping
+			s.log.Debug("================sequencerCh end=================")
 		case <-altSyncTicker.C:
+			s.log.Debug("================altSyncTicker start=================")
 			// Check if there is a gap in the current unsafe payload queue.
 			ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 			err := s.checkForGapInUnsafeQueue(ctx)
@@ -265,27 +268,39 @@ func (s *Driver) eventLoop() {
 			if err != nil {
 				s.log.Warn("failed to check for unsafe L2 blocks to sync", "err", err)
 			}
+			s.log.Debug("================altSyncTicker end===================")
 		case payload := <-s.unsafeL2Payloads:
+			s.log.Debug("================unsafeL2Payloads start=================")
 			s.snapshot("New unsafe payload")
 			s.log.Info("Optimistically queueing unsafe L2 execution payload", "id", payload.ID())
 			s.derivation.AddUnsafePayload(payload)
 			s.metrics.RecordReceivedUnsafePayload(payload)
 			reqStep()
+			s.log.Debug("================unsafeL2Payloads end=================")
 
 		case newL1Head := <-s.l1HeadSig:
+			s.log.Debug("================newL1Head start=================")
 			s.l1State.HandleNewL1HeadBlock(newL1Head)
 			reqStep() // a new L1 head may mean we have the data to not get an EOF again.
+			s.log.Debug("================newL1Head end=================")
 		case newL1Safe := <-s.l1SafeSig:
+			s.log.Debug("================newL1Safe start=================")
 			s.l1State.HandleNewL1SafeBlock(newL1Safe)
 			// no step, justified L1 information does not do anything for L2 derivation or status
+			s.log.Debug("================newL1Safe end=================")
 		case newL1Finalized := <-s.l1FinalizedSig:
+			s.log.Debug("================newL1Finalized start=================")
 			s.l1State.HandleNewL1FinalizedBlock(newL1Finalized)
 			s.derivation.Finalize(newL1Finalized)
 			reqStep() // we may be able to mark more L2 data as finalized now
+			s.log.Debug("================newL1Finalized end=================")
 		case <-delayedStepReq:
+			s.log.Debug("================delayedStepReq start=================")
 			delayedStepReq = nil
 			step()
+			s.log.Debug("================delayedStepReq end=================")
 		case <-stepReqCh:
+			s.log.Debug("================stepReqCh start=================")
 			s.metrics.SetDerivationIdle(false)
 			s.log.Debug("Derivation process step", "onto_origin", s.derivation.Origin(), "attempts", stepAttempts)
 			err := s.derivation.Step(context.Background())
@@ -320,8 +335,11 @@ func (s *Driver) eventLoop() {
 				stepAttempts = 0
 				reqStep() // continue with the next step if we can
 			}
+			s.log.Debug("================stepReqCh end=================")
 		case respCh := <-s.stateReq:
+			s.log.Debug("================respCh start=================")
 			respCh <- struct{}{}
+			s.log.Debug("================respCh end=================")
 		case respCh := <-s.forceReset:
 			s.log.Warn("Derivation pipeline is manually reset")
 			s.derivation.Reset()
