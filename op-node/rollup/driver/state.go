@@ -196,6 +196,7 @@ func (s *Driver) eventLoop() {
 		if len(sequencerCh) > 0 { // empty if not already drained before resetting
 			<-sequencerCh
 		}
+		s.log.Debug("------------sequencer delay ", delay)
 		sequencerTimer.Reset(delay)
 	}
 
@@ -207,6 +208,7 @@ func (s *Driver) eventLoop() {
 	lastUnsafeL2 := s.derivation.UnsafeL2Head()
 
 	for {
+		s.log.Debug("===================for==================")
 		// If we are sequencing, and the L1 state is ready, update the trigger for the next sequencer action.
 		// This may adjust at any time based on fork-choice changes or previous errors.
 		// And avoid sequencing if the derivation pipeline indicates the engine is not ready.
@@ -228,7 +230,29 @@ func (s *Driver) eventLoop() {
 				// This may adjust at any time based on fork-choice changes or previous errors.
 				//
 				// update sequencer time if the head changed
-				planSequencerAction()
+				delay := s.sequencer.PlanNextSequencerAction()
+				s.log.Debug("---------------plan s action ", delay)
+				if delay == 0 {
+					s.log.Debug("******************sequencerCh start*************************")
+					payload, err := s.sequencer.RunNextSequencerAction(ctx)
+					if err != nil {
+						s.log.Error("Sequencer critical error", "err", err)
+						return
+					}
+					if s.network != nil && payload != nil {
+						// Publishing of unsafe data via p2p is optional.
+						// Errors are not severe enough to change/halt sequencing but should be logged and metered.
+						if err := s.network.PublishL2Payload(ctx, payload); err != nil {
+							s.log.Warn("failed to publish newly created block", "id", payload.ID(), "err", err)
+							s.metrics.RecordPublishingError()
+						}
+					}
+					planSequencerAction() // schedule the next sequencer action to keep the sequencing looping
+					s.log.Debug("**************sequencerCh end***************************")
+					continue
+				} else {
+					planSequencerAction()
+				}
 			}
 		} else {
 			sequencerCh = nil
@@ -277,7 +301,7 @@ func (s *Driver) eventLoop() {
 					}
 				}
 				planSequencerAction() // schedule the next sequencer action to keep the sequencing looping
-				s.log.Debug("================sequencerCh end=================")
+				s.log.Debug("xxxxxxxxxxxxxxx-sequencerCh end-xxxxxxxxxxxxxxxx")
 			case <-altSyncTicker.C:
 				s.log.Debug("================altSyncTicker start=================")
 				// Check if there is a gap in the current unsafe payload queue.
