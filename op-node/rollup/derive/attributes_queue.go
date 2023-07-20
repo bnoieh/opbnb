@@ -55,7 +55,9 @@ func (aq *AttributesQueue) NextAttributes(ctx context.Context, l2SafeHead eth.L2
 
 	// Get a batch if we need it
 	if aq.batch == nil {
+		aq.log.Warn("^^^^^^^^^^^^^start aq.prev.NextBatch^^^^^^^^^^^")
 		batch, err := aq.prev.NextBatch(ctx, l2SafeHead)
+		aq.log.Warn("^^^^^^^^^^^^^end aq.prev.NextBatch^^^^^^^^^^^")
 		if err != nil {
 			return nil, err
 		}
@@ -76,6 +78,8 @@ func (aq *AttributesQueue) NextAttributes(ctx context.Context, l2SafeHead eth.L2
 // createNextAttributes transforms a batch into a payload attributes. This sets `NoTxPool` and appends the batched transactions
 // to the attributes transaction list
 func (aq *AttributesQueue) createNextAttributes(ctx context.Context, batch *BatchData, l2SafeHead eth.L2BlockRef) (*eth.PayloadAttributes, error) {
+	aq.log.Warn("^^^^^^^^^^^^^start createNextAttributes^^^^^^^^^^^")
+	defer aq.log.Warn("^^^^^^^^^^^^^end createNextAttributes^^^^^^^^^^^")
 	// sanity check parent hash
 	if batch.ParentHash != l2SafeHead.Hash {
 		return nil, NewResetError(fmt.Errorf("valid batch has bad parent hash %s, expected %s", batch.ParentHash, l2SafeHead.Hash))

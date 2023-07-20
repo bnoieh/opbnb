@@ -150,7 +150,7 @@ func (s *L2Client) L2BlockRefByHash(ctx context.Context, hash common.Hash) (eth.
 // The returned [eth.SystemConfig] may not be in the canonical chain when the hash is not canonical.
 func (s *L2Client) SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (eth.SystemConfig, error) {
 	if ref, ok := s.systemConfigsCache.Get(hash); ok {
-		fmt.Println("get system config by l2 hash hit cache")
+		fmt.Println("^^^^^^^get system config by l2 hash hit cache^^^^^^^^")
 		return ref.(eth.SystemConfig), nil
 	}
 
