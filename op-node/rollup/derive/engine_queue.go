@@ -223,9 +223,13 @@ func (eq *EngineQueue) SafeL2Head() eth.L2BlockRef {
 
 func (eq *EngineQueue) Step(ctx context.Context) error {
 	if eq.needForkchoiceUpdate {
+		eq.log.Warn("^^^^^^^^^^^^^start try update engine^^^^^^^^^^^")
+		defer eq.log.Warn("^^^^^^^^^^^^^end try update engine^^^^^^^^^^^")
 		return eq.tryUpdateEngine(ctx)
 	}
 	if eq.safeAttributes != nil {
+		eq.log.Warn("^^^^^^^^^^^^^start try next safe attr^^^^^^^^^^^")
+		defer eq.log.Warn("^^^^^^^^^^^^^end try next safe attr^^^^^^^^^^^")
 		return eq.tryNextSafeAttributes(ctx)
 	}
 	outOfData := false
@@ -254,6 +258,7 @@ func (eq *EngineQueue) Step(ctx context.Context) error {
 	}
 
 	if eq.unsafePayloads.Len() > 0 {
+		eq.log.Warn("^^^^^^^^^^^^^unreachable eq.unsafePayloads.Len^^^^^^^^^^^")
 		return eq.tryNextUnsafePayload(ctx)
 	}
 
@@ -268,6 +273,8 @@ func (eq *EngineQueue) Step(ctx context.Context) error {
 // If the unsafe head origin is after the new L1 origin it is assumed to still be canonical.
 // The check is only required when moving to a new L1 origin.
 func (eq *EngineQueue) verifyNewL1Origin(ctx context.Context, newOrigin eth.L1BlockRef) error {
+	eq.log.Warn("^^^^^^^^^^^^^start verifyNewL1Origin^^^^^^^^^^^")
+	defer eq.log.Warn("^^^^^^^^^^^^^end verifyNewL1Origin^^^^^^^^^^^")
 	if newOrigin == eq.origin {
 		return nil
 	}
@@ -297,6 +304,8 @@ func (eq *EngineQueue) verifyNewL1Origin(ctx context.Context, newOrigin eth.L1Bl
 }
 
 func (eq *EngineQueue) tryFinalizePastL2Blocks(ctx context.Context) error {
+	eq.log.Warn("^^^^^^^^^^^^^start tryFinalizePastL2Blocks^^^^^^^^^^^")
+	defer eq.log.Warn("^^^^^^^^^^^^^end tryFinalizePastL2Blocks^^^^^^^^^^^")
 	if eq.finalizedL1 == (eth.L1BlockRef{}) {
 		return nil
 	}
@@ -522,7 +531,10 @@ func (eq *EngineQueue) consolidateNextSafeAttributes(ctx context.Context) error 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
+	eq.log.Warn("^^^^^^^^^^^^^start eq.engine.PayloadByNumber^^^^^^^^^^^")
 	payload, err := eq.engine.PayloadByNumber(ctx, eq.safeHead.Number+1)
+	eq.log.Warn("^^^^^^^^^^^^^end eq.engine.PayloadByNumber^^^^^^^^^^^")
+
 	if err != nil {
 		if errors.Is(err, ethereum.NotFound) {
 			// engine may have restarted, or inconsistent safe head. We need to reset

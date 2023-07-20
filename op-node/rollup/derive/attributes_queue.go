@@ -50,6 +50,9 @@ func (aq *AttributesQueue) Origin() eth.L1BlockRef {
 }
 
 func (aq *AttributesQueue) NextAttributes(ctx context.Context, l2SafeHead eth.L2BlockRef) (*eth.PayloadAttributes, error) {
+	aq.log.Warn("^^^^^^^^^^^^^start eq.prev.NextAttributes^^^^^^^^^^^")
+	defer aq.log.Warn("^^^^^^^^^^^^^end eq.prev.NextAttributes^^^^^^^^^^^")
+
 	// Get a batch if we need it
 	if aq.batch == nil {
 		batch, err := aq.prev.NextBatch(ctx, l2SafeHead)
