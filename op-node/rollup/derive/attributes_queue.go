@@ -51,13 +51,19 @@ func (aq *AttributesQueue) Origin() eth.L1BlockRef {
 
 func (aq *AttributesQueue) NextAttributes(ctx context.Context, l2SafeHead eth.L2BlockRef) (*eth.PayloadAttributes, error) {
 	aq.log.Warn("^^^^^^^^^^^^^start eq.prev.NextAttributes^^^^^^^^^^^")
-	defer aq.log.Warn("^^^^^^^^^^^^^end eq.prev.NextAttributes^^^^^^^^^^^")
+	start := time.Now()
+	defer func() {
+		dur := time.Since(start)
+		aq.log.Warn("^^^^^^^^^^^^^end eq.prev.NextAttributes^^^^^^^^^^^", "abcd", dur)
+	}()
 
 	// Get a batch if we need it
 	if aq.batch == nil {
+		start1 := time.Now()
 		aq.log.Warn("^^^^^^^^^^^^^start aq.prev.NextBatch^^^^^^^^^^^")
 		batch, err := aq.prev.NextBatch(ctx, l2SafeHead)
-		aq.log.Warn("^^^^^^^^^^^^^end aq.prev.NextBatch^^^^^^^^^^^")
+		dur1 := time.Since(start1)
+		aq.log.Warn("^^^^^^^^^^^^^end aq.prev.NextBatch^^^^^^^^^^^", "abcd", dur1)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +85,11 @@ func (aq *AttributesQueue) NextAttributes(ctx context.Context, l2SafeHead eth.L2
 // to the attributes transaction list
 func (aq *AttributesQueue) createNextAttributes(ctx context.Context, batch *BatchData, l2SafeHead eth.L2BlockRef) (*eth.PayloadAttributes, error) {
 	aq.log.Warn("^^^^^^^^^^^^^start createNextAttributes^^^^^^^^^^^")
-	defer aq.log.Warn("^^^^^^^^^^^^^end createNextAttributes^^^^^^^^^^^")
+	start := time.Now()
+	defer func() {
+		dur := time.Since(start)
+		aq.log.Warn("^^^^^^^^^^^^^end createNextAttributes^^^^^^^^^^^", "abcd", dur)
+	}()
 	// sanity check parent hash
 	if batch.ParentHash != l2SafeHead.Hash {
 		return nil, NewResetError(fmt.Errorf("valid batch has bad parent hash %s, expected %s", batch.ParentHash, l2SafeHead.Hash))

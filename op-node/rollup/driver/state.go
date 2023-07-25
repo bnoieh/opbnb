@@ -343,7 +343,6 @@ func (s *Driver) eventLoop() {
 				step()
 				s.log.Debug("================delayedStepReq end=================")
 			case <-stepReqCh:
-				s.log.Debug("================stepReqCh start=================")
 				s.metrics.SetDerivationIdle(false)
 				s.log.Debug("Derivation process step", "onto_origin", s.derivation.Origin(), "attempts", stepAttempts)
 				err := s.derivation.Step(context.Background())
@@ -378,7 +377,6 @@ func (s *Driver) eventLoop() {
 					stepAttempts = 0
 					reqStep() // continue with the next step if we can
 				}
-				s.log.Debug("================stepReqCh end=================")
 			case respCh := <-s.stateReq:
 				s.log.Debug("================respCh start=================")
 				respCh <- struct{}{}

@@ -222,14 +222,28 @@ func (eq *EngineQueue) SafeL2Head() eth.L2BlockRef {
 }
 
 func (eq *EngineQueue) Step(ctx context.Context) error {
+	eq.log.Debug("================stepReqCh start=================")
+	start := time.Now()
+	defer func() {
+		dur := time.Since(start)
+		eq.log.Debug("================stepReqCh end=================", "abcd", dur)
+	}()
 	if eq.needForkchoiceUpdate {
 		eq.log.Warn("^^^^^^^^^^^^^start try update engine^^^^^^^^^^^")
-		defer eq.log.Warn("^^^^^^^^^^^^^end try update engine^^^^^^^^^^^")
+		start1 := time.Now()
+		defer func() {
+			dur := time.Since(start1)
+			eq.log.Debug("^^^^^^^^^^^^^end try update engine^^^^^^^^^^^", "abcd", dur)
+		}()
 		return eq.tryUpdateEngine(ctx)
 	}
 	if eq.safeAttributes != nil {
 		eq.log.Warn("^^^^^^^^^^^^^start try next safe attr^^^^^^^^^^^")
-		defer eq.log.Warn("^^^^^^^^^^^^^end try next safe attr^^^^^^^^^^^")
+		start2 := time.Now()
+		defer func() {
+			dur := time.Since(start2)
+			eq.log.Debug("^^^^^^^^^^^^^end try next safe attr^^^^^^^^^^^", "abcd", dur)
+		}()
 		return eq.tryNextSafeAttributes(ctx)
 	}
 	outOfData := false
@@ -274,7 +288,11 @@ func (eq *EngineQueue) Step(ctx context.Context) error {
 // The check is only required when moving to a new L1 origin.
 func (eq *EngineQueue) verifyNewL1Origin(ctx context.Context, newOrigin eth.L1BlockRef) error {
 	eq.log.Warn("^^^^^^^^^^^^^start verifyNewL1Origin^^^^^^^^^^^")
-	defer eq.log.Warn("^^^^^^^^^^^^^end verifyNewL1Origin^^^^^^^^^^^")
+	start := time.Now()
+	defer func() {
+		dur := time.Since(start)
+		eq.log.Warn("^^^^^^^^^^^^^end verifyNewL1Origin^^^^^^^^^^^", "abcd", dur)
+	}()
 	if newOrigin == eq.origin {
 		return nil
 	}
@@ -305,7 +323,11 @@ func (eq *EngineQueue) verifyNewL1Origin(ctx context.Context, newOrigin eth.L1Bl
 
 func (eq *EngineQueue) tryFinalizePastL2Blocks(ctx context.Context) error {
 	eq.log.Warn("^^^^^^^^^^^^^start tryFinalizePastL2Blocks^^^^^^^^^^^")
-	defer eq.log.Warn("^^^^^^^^^^^^^end tryFinalizePastL2Blocks^^^^^^^^^^^")
+	start := time.Now()
+	defer func() {
+		dur := time.Since(start)
+		eq.log.Warn("^^^^^^^^^^^^^end tryFinalizePastL2Blocks^^^^^^^^^^^", "abcd", dur)
+	}()
 	if eq.finalizedL1 == (eth.L1BlockRef{}) {
 		return nil
 	}
@@ -532,8 +554,10 @@ func (eq *EngineQueue) consolidateNextSafeAttributes(ctx context.Context) error 
 	defer cancel()
 
 	eq.log.Warn("^^^^^^^^^^^^^start eq.engine.PayloadByNumber^^^^^^^^^^^")
+	start := time.Now()
 	payload, err := eq.engine.PayloadByNumber(ctx, eq.safeHead.Number+1)
-	eq.log.Warn("^^^^^^^^^^^^^end eq.engine.PayloadByNumber^^^^^^^^^^^")
+	dur := time.Since(start)
+	eq.log.Warn("^^^^^^^^^^^^^end eq.engine.PayloadByNumber^^^^^^^^^^^", "abcd", dur)
 
 	if err != nil {
 		if errors.Is(err, ethereum.NotFound) {
