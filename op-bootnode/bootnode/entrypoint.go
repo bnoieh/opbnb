@@ -12,6 +12,7 @@ import (
 	p2pcli "github.com/ethereum-optimism/optimism/op-node/p2p/cli"
 	"github.com/ethereum-optimism/optimism/op-node/rollup"
 	oplog "github.com/ethereum-optimism/optimism/op-service/log"
+	opmetrics "github.com/ethereum-optimism/optimism/op-service/metrics"
 	"github.com/ethereum-optimism/optimism/op-service/opio"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
@@ -66,6 +67,17 @@ func Main(cliCtx *cli.Context) error {
 	}
 
 	go p2pNode.DiscoveryProcess(ctx, logger, config, p2pConfig.TargetPeers())
+
+	metricsCfg := opmetrics.ReadCLIConfig(cliCtx)
+	if metricsCfg.Enabled {
+		log.Info("starting metrics server", "addr", metricsCfg.ListenAddr, "port", metricsCfg.ListenPort)
+		go func() {
+			if err := m.Serve(ctx, metricsCfg.ListenAddr, metricsCfg.ListenPort); err != nil {
+				log.Error("error starting metrics server", err)
+			}
+		}()
+		m.RecordUp()
+	}
 
 	opio.BlockOnInterrupts()
 
