@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -38,7 +38,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -58,7 +58,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -79,7 +79,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: Install gotestsum
         uses: autero1/action-gotestsum@v2.0.0
@@ -109,7 +109,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: Install gotestsum
         uses: autero1/action-gotestsum@v2.0.0
@@ -139,7 +139,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: Install gotestsum
         uses: autero1/action-gotestsum@v2.0.0
@@ -169,7 +169,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: Install gotestsum
         uses: autero1/action-gotestsum@v2.0.0
@@ -201,7 +201,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        run: go version
+
 
       - name: Install gotestsum
         uses: autero1/action-gotestsum@v2.0.0
