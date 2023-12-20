@@ -103,7 +103,11 @@ func (q *Queue[T]) groupContext() (*errgroup.Group, context.Context) {
 	q.groupLock.Lock()
 	defer q.groupLock.Unlock()
 	if q.groupCtx == nil || q.groupCtx.Err() != nil {
-		log.Error("groupCtx encouter error and had been reset", q.groupCtx.Err())
+		if q.groupCtx != nil {
+			log.Error("groupCtx encouter error and had been reset", q.groupCtx.Err())
+		} else {
+			log.Error("groupCtx encouter error and had been reset")
+		}
 		// no group exists, or the existing context has an error, so we need to wait
 		// for existing group threads to complete (if any) and create a new group
 		if q.group != nil {
