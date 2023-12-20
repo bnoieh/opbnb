@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -108,6 +109,7 @@ func (q *Queue[T]) groupContext() (*errgroup.Group, context.Context) {
 		if q.maxPending > 0 {
 			q.group.SetLimit(int(q.maxPending))
 		}
+		log.Error("groupCtx encouter error and had been reset")
 	}
 	return q.group, q.groupCtx
 }

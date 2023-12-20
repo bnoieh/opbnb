@@ -141,6 +141,7 @@ func (m *SimpleTxManager) Send(ctx context.Context, candidate TxCandidate) (*typ
 	receipt, err := m.send(ctx, candidate)
 	if err != nil {
 		m.resetNonce()
+		m.l.Error("Send txn error and nonce resetted, error:", err)
 	}
 	return receipt, err
 }
@@ -279,7 +280,37 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 			}
 			// If we see lots of unrecoverable errors (and no pending transactions) abort sending the transaction.
 			if sendState.ShouldAbortImmediately() {
-				m.l.Warn("Aborting transaction submission")
+				m.l.Warn("Asset if real need abort transaction submission ", tx.Hash())
+				receipt := (*types.Receipt)(nil)
+				for i := 0; i < 3; i++ {
+					rCtx, cancel := context.WithTimeout(ctx, m.cfg.NetworkTimeout)
+					defer cancel()
+					receipt, _ = m.backend.TransactionReceipt(rCtx, tx.Hash())
+					if receipt != nil {
+						break
+					}
+				}
+
+				if receipt != nil {
+					m.l.Warn("Should not abort, txn is mined on chain ", tx.Hash())
+					sendState.ProcessSendError(nil)
+					sendState.TxMined(tx.Hash())
+					go func() {
+						receipt, err := m.waitMined(ctx, tx, sendState)
+						if err != nil {
+							log.Warn("Transaction receipt not found", "err", err)
+							return
+						}
+						select {
+						case receiptChan <- receipt:
+							m.l.Info("Should not abort, txn is confirmed on chain ", tx.Hash())
+						default:
+						}
+					}()
+					continue
+				}
+
+				m.l.Error("Should abort transaction submission ", tx.Hash())
 				return nil, errors.New("aborted transaction sending")
 			}
 			// Increase the gas price & submit the new transaction
@@ -287,6 +318,7 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 			wg.Add(1)
 			bumpCounter += 1
 			go sendTxAsync(tx)
+			m.l.Warn("bump to retry send txn:", tx.Hash())
 
 		case <-ctx.Done():
 			return nil, ctx.Err()

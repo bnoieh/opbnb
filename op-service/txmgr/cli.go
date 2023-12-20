@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	txmetrics "github.com/ethereum-optimism/optimism/op-service/txmgr/metrics"
 	"math/big"
 	"time"
+
+	txmetrics "github.com/ethereum-optimism/optimism/op-service/txmgr/metrics"
 
 	opservice "github.com/ethereum-optimism/optimism/op-service"
 	service_client "github.com/ethereum-optimism/optimism/op-service/client"
@@ -87,7 +88,7 @@ func CLIFlags(envPrefix string) []cli.Flag {
 		cli.DurationFlag{
 			Name:   NetworkTimeoutFlagName,
 			Usage:  "Timeout for all network operations",
-			Value:  2 * time.Second,
+			Value:  10 * time.Second,
 			EnvVar: opservice.PrefixEnvVar(envPrefix, "NETWORK_TIMEOUT"),
 		},
 		cli.DurationFlag{
