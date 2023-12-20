@@ -88,6 +88,9 @@ func (q *Queue[T]) sendTx(ctx context.Context, id T, candidate TxCandidate, rece
 		Receipt: receipt,
 		Err:     err,
 	}
+	if err != nil {
+		log.Error("sendTx job error:", err)
+	}
 	return err
 }
 
@@ -100,6 +103,7 @@ func (q *Queue[T]) groupContext() (*errgroup.Group, context.Context) {
 	q.groupLock.Lock()
 	defer q.groupLock.Unlock()
 	if q.groupCtx == nil || q.groupCtx.Err() != nil {
+		log.Error("groupCtx encouter error and had been reset", q.groupCtx.Err())
 		// no group exists, or the existing context has an error, so we need to wait
 		// for existing group threads to complete (if any) and create a new group
 		if q.group != nil {
@@ -109,7 +113,6 @@ func (q *Queue[T]) groupContext() (*errgroup.Group, context.Context) {
 		if q.maxPending > 0 {
 			q.group.SetLimit(int(q.maxPending))
 		}
-		log.Error("groupCtx encouter error and had been reset")
 	}
 	return q.group, q.groupCtx
 }

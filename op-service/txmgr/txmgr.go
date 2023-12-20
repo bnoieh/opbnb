@@ -166,7 +166,15 @@ func (m *SimpleTxManager) send(ctx context.Context, candidate TxCandidate) (*typ
 // NOTE: If the [TxCandidate.GasLimit] is non-zero, it will be used as the transaction's gas.
 // NOTE: Otherwise, the [SimpleTxManager] will query the specified backend for an estimate.
 func (m *SimpleTxManager) craftTx(ctx context.Context, candidate TxCandidate) (*types.Transaction, error) {
-	gasTipCap, basefee, err := m.suggestGasPriceCaps(ctx)
+	var gasTipCap, basefee *big.Int
+	var err error
+	for i := 0; i < 6; i++ {
+		gasTipCap, basefee, err = m.suggestGasPriceCaps(ctx)
+		if err == nil {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 	if err != nil {
 		m.metr.RPCError()
 		return nil, fmt.Errorf("failed to get gas price info: %w", err)
@@ -188,13 +196,21 @@ func (m *SimpleTxManager) craftTx(ctx context.Context, candidate TxCandidate) (*
 		rawTx.Gas = candidate.GasLimit
 	} else {
 		// Calculate the intrinsic gas for the transaction
-		gas, err := m.backend.EstimateGas(ctx, bsc.ToLegacyCallMsg(ethereum.CallMsg{
-			From:      m.cfg.From,
-			To:        candidate.To,
-			GasFeeCap: gasFeeCap,
-			GasTipCap: gasTipCap,
-			Data:      rawTx.Data,
-		}))
+		var gas uint64
+		var err error
+		for i := 0; i < 6; i++ {
+			gas, err = m.backend.EstimateGas(ctx, bsc.ToLegacyCallMsg(ethereum.CallMsg{
+				From:      m.cfg.From,
+				To:        candidate.To,
+				GasFeeCap: gasFeeCap,
+				GasTipCap: gasTipCap,
+				Data:      rawTx.Data,
+			}))
+			if err == nil {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to estimate gas: %w", err)
 		}
@@ -283,13 +299,16 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 			if sendState.ShouldAbortImmediately() {
 				m.l.Warn("Asset if real need abort transaction submission ", tx.Hash())
 				receipt := (*types.Receipt)(nil)
-				for i := 0; i < 3; i++ {
+				var err error
+				for i := 0; i < 6; i++ {
 					rCtx, cancel := context.WithTimeout(ctx, m.cfg.NetworkTimeout)
 					defer cancel()
-					receipt, _ = m.backend.TransactionReceipt(rCtx, tx.Hash())
+					receipt, err = m.backend.TransactionReceipt(rCtx, tx.Hash())
 					if receipt != nil {
 						break
 					}
+					m.l.Warn("Try to get receipt failed with retry, ", i, tx.Hash(), err)
+					time.Sleep(100 * time.Millisecond)
 				}
 
 				if receipt != nil {
@@ -299,7 +318,7 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 					go func() {
 						receipt, err := m.waitMined(ctx, tx, sendState)
 						if err != nil {
-							log.Warn("Transaction receipt not found", "err", err)
+							log.Warn("Transaction receipt not found when recover from abort", "err", err)
 							return
 						}
 						select {
