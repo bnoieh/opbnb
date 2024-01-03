@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.2.4
+
+This is a minor release and upgrading is optional.
+
+### User Facing Changes
+
+- The op-node is pre-configured with bootnodes for opBNB mainnet and testnet. By default, the op-node will use these pre-configured bootnodes for both networks. If you prefer to use your own bootnodes, you can configure the `p2p.bootnodes` parameter in the command line flag.(#89)
+
+### Partial Changelog
+
+- #87: optimize(op-node): make block produce stable when L1 latency unstable
+- #89: feat(op-node): add opBNB bootnodes
+- #94: fix(op-node/op-batcher): fallbackClient should ignore ethereum.NotFound error
+- #100: feature(op-node): pre-fetch receipts concurrently
+- #101: optimize(op-node): continue optimizing sequencer step schedule
+- #104: feat(op-node): pre-fetch receipts concurrently round 2
+- #106: optimize: extended expire time for sequencer block broadcasting
+
+### Docker Images
+
+- ghcr.io/bnb-chain/op-node:v0.2.4
+- ghcr.io/bnb-chain/op-batcher:v0.2.4
+- ghcr.io/bnb-chain/op-proposer:v0.2.4
+
+### Full Changelog
+
+https://github.com/bnb-chain/opbnb/compare/v0.2.3...v0.2.4
+
 ## v0.2.3
 
 This is a minor release and upgrading is optional.
