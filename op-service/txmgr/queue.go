@@ -89,7 +89,7 @@ func (q *Queue[T]) sendTx(ctx context.Context, id T, candidate TxCandidate, rece
 		Err:     err,
 	}
 	if err != nil {
-		log.Error("sendTx job error:", err)
+		log.Error("sendTx job", "error", err)
 	}
 	return err
 }
@@ -104,7 +104,7 @@ func (q *Queue[T]) groupContext() (*errgroup.Group, context.Context) {
 	defer q.groupLock.Unlock()
 	if q.groupCtx == nil || q.groupCtx.Err() != nil {
 		if q.groupCtx != nil {
-			log.Error("groupCtx encouter error and had been reset", q.groupCtx.Err())
+			log.Error("groupCtx encouter error and had been reset", "err", q.groupCtx.Err())
 		} else {
 			log.Error("groupCtx encouter error and had been reset")
 		}

@@ -141,7 +141,7 @@ func (m *SimpleTxManager) Send(ctx context.Context, candidate TxCandidate) (*typ
 	receipt, err := m.send(ctx, candidate)
 	if err != nil {
 		m.resetNonce()
-		m.l.Error("Send txn error and nonce resetted, error:", err)
+		m.l.Error("Send txn error and nonce resetted", "error", err)
 	}
 	return receipt, err
 }
@@ -297,7 +297,7 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 			}
 			// If we see lots of unrecoverable errors (and no pending transactions) abort sending the transaction.
 			if sendState.ShouldAbortImmediately() {
-				m.l.Warn("Asset if real need abort transaction submission ", tx.Hash())
+				m.l.Warn("Asset if real need abort transaction submission ", "hash", tx.Hash())
 				receipt := (*types.Receipt)(nil)
 				var err error
 				for i := 0; i < 6; i++ {
@@ -307,12 +307,12 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 					if receipt != nil {
 						break
 					}
-					m.l.Warn("Try to get receipt failed with retry, ", i, tx.Hash(), err)
+					m.l.Warn("Try to get receipt failed with retry, ", "idx", i, "hash", tx.Hash(), "err", err)
 					time.Sleep(100 * time.Millisecond)
 				}
 
 				if receipt != nil {
-					m.l.Warn("Should not abort, txn is mined on chain ", tx.Hash())
+					m.l.Warn("Should not abort, txn is mined on chain ", "hash", tx.Hash())
 					sendState.ProcessSendError(nil)
 					sendState.TxMined(tx.Hash())
 					go func() {
@@ -323,14 +323,14 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 						}
 						select {
 						case receiptChan <- receipt:
-							m.l.Info("Should not abort, txn is confirmed on chain ", tx.Hash())
+							m.l.Info("Should not abort, txn is confirmed on chain ", "hash", tx.Hash())
 						default:
 						}
 					}()
 					continue
 				}
 
-				m.l.Error("Should abort transaction submission ", tx.Hash())
+				m.l.Error("Should abort transaction submission ", "hash", tx.Hash())
 				return nil, errors.New("aborted transaction sending")
 			}
 			// Increase the gas price & submit the new transaction
@@ -338,7 +338,7 @@ func (m *SimpleTxManager) sendTx(ctx context.Context, tx *types.Transaction) (*t
 			wg.Add(1)
 			bumpCounter += 1
 			go sendTxAsync(tx)
-			m.l.Warn("bump to retry send txn:", tx.Hash())
+			m.l.Warn("bump to retry send txn:", "hash", tx.Hash())
 
 		case <-ctx.Done():
 			return nil, ctx.Err()
