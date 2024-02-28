@@ -110,6 +110,8 @@ type Metrics struct {
 	SequencerBuildingDiffDurationSeconds prometheus.Histogram
 	SequencerBuildingDiffTotal           prometheus.Counter
 
+	SequencerBuildingStepDurationSeconds *prometheus.HistogramVec
+
 	SequencerSealingDurationSeconds prometheus.Histogram
 	SequencerSealingTotal           prometheus.Counter
 
@@ -353,6 +355,13 @@ func NewMetrics(procName string) *Metrics {
 			Name:      "sequencer_building_diff_total",
 			Help:      "Number of sequencer block building jobs",
 		}),
+		SequencerBuildingStepDurationSeconds: factory.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: ns,
+			Name:      "sequencer_building_step_seconds",
+			Buckets:   []float64{
+				.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+			Help:      "Histogram of Sequencer building main step duration time",
+		}, []string{"step"}),
 		SequencerSealingDurationSeconds: factory.NewHistogram(prometheus.HistogramOpts{
 			Namespace: ns,
 			Name:      "sequencer_sealing_seconds",
@@ -522,6 +531,10 @@ func (m *Metrics) RecordL1RequestTime(method string, duration time.Duration) {
 func (m *Metrics) RecordSequencerBuildingDiffTime(duration time.Duration) {
 	m.SequencerBuildingDiffTotal.Inc()
 	m.SequencerBuildingDiffDurationSeconds.Observe(float64(duration) / float64(time.Second))
+}
+
+func (m *Metrics) RecordSequencerBuildingStepTime(step string, duration time.Duration) {
+	m.SequencerBuildingStepDurationSeconds.WithLabelValues(step).Observe(float64(duration) / float64(time.Second))
 }
 
 // RecordSequencerSealingTime tracks the amount of time the sequencer took to finish sealing the block.

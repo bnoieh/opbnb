@@ -34,6 +34,7 @@ type L1OriginSelectorIface interface {
 type SequencerMetrics interface {
 	RecordSequencerInconsistentL1Origin(from eth.BlockID, to eth.BlockID)
 	RecordSequencerReset()
+	RecordSequencerBuildingStepTime(step string, duration time.Duration)
 }
 
 // Sequencer implements the sequencing interface of the driver: it starts and completes block building jobs.
@@ -74,11 +75,13 @@ func (d *Sequencer) StartBuildingBlock(ctx context.Context) error {
 	l2Head := d.engine.UnsafeL2Head()
 
 	// Figure out which L1 origin block we're going to be building on top of.
+	start := time.Now()
 	l1Origin, err := d.l1OriginSelector.FindL1Origin(ctx, l2Head)
 	if err != nil {
 		d.log.Error("Error finding next L1 Origin", "err", err)
 		return err
 	}
+	d.metrics.RecordSequencerBuildingStepTime("findL1Origin", time.Since(start))
 
 	if !(l2Head.L1Origin.Hash == l1Origin.ParentHash || l2Head.L1Origin.Hash == l1Origin.Hash) {
 		d.metrics.RecordSequencerInconsistentL1Origin(l2Head.L1Origin, l1Origin.ID())
@@ -90,10 +93,12 @@ func (d *Sequencer) StartBuildingBlock(ctx context.Context) error {
 	fetchCtx, cancel := context.WithTimeout(ctx, time.Second*20)
 	defer cancel()
 
+	start = time.Now()
 	attrs, err := d.attrBuilder.PreparePayloadAttributes(fetchCtx, l2Head, l1Origin.ID())
 	if err != nil {
 		return err
 	}
+	d.metrics.RecordSequencerBuildingStepTime("preparePayloadAttributes", time.Since(start))
 
 	// If our next L2 block timestamp is beyond the Sequencer drift threshold, then we must produce
 	// empty blocks (other than the L1 info deposit and any user deposits). We handle this by
@@ -118,10 +123,12 @@ func (d *Sequencer) StartBuildingBlock(ctx context.Context) error {
 		"origin", l1Origin, "origin_time", l1Origin.Time, "noTxPool", attrs.NoTxPool)
 
 	// Start a payload building process.
+	start = time.Now()
 	errTyp, err := d.engine.StartPayload(ctx, l2Head, attrs, false)
 	if err != nil {
 		return fmt.Errorf("failed to start building on top of L2 chain %s, error (%d): %w", l2Head, errTyp, err)
 	}
+	d.metrics.RecordSequencerBuildingStepTime("startPayload", time.Since(start))
 	return nil
 }
 
