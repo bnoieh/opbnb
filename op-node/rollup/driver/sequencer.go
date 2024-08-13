@@ -122,6 +122,7 @@ func (d *Sequencer) StartBuildingBlock(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start building on top of L2 chain %s, error (%d): %w", l2Head, errTyp, err)
 	}
+	log.Info("eng.FCUAddr", "duration", time.Since(start).Milliseconds(), "parent", l2Head.Hash)
 	d.metrics.RecordSequencerStepTime("forkChoiceUpdateAttributes", time.Since(start))
 	return nil
 }
@@ -228,6 +229,7 @@ func (d *Sequencer) RunNextSequencerAction(ctx context.Context, agossip async.As
 			d.nextAction = d.timeNow().Add(time.Second * time.Duration(d.rollupCfg.BlockTime))
 			return nil, nil
 		}
+		start := time.Now()
 		envelope, err := d.CompleteBuildingBlock(ctx, agossip, sequencerConductor)
 		if err != nil {
 			if errors.Is(err, derive.ErrCritical) {
@@ -251,11 +253,8 @@ func (d *Sequencer) RunNextSequencerAction(ctx context.Context, agossip async.As
 			return nil, nil
 		} else {
 			payload := envelope.ExecutionPayload
-			if len(payload.Transactions) == 1 {
-				d.accEmptyBlocks += 1
-			}
 			d.attrBuilder.CachePayloadByHash(envelope)
-			d.log.Info("sequencer successfully built a new block", "block", payload.ID(), "time", uint64(payload.Timestamp), "txs", len(payload.Transactions))
+			d.log.Info("sequencer successfully built a new block", "duration", time.Since(start).Milliseconds(), "block", payload.ID(), "time", uint64(payload.Timestamp), "txs", len(payload.Transactions))
 			return envelope, nil
 		}
 	} else {
@@ -278,12 +277,7 @@ func (d *Sequencer) RunNextSequencerAction(ctx context.Context, agossip async.As
 			}
 		} else {
 			parent, buildingID, _ := d.engine.BuildingPayload() // we should have a new payload ID now that we're building a block
-			if d.accEmptyBlocks >= buildFullBlockInterval {
-				d.nextAction = d.timeNow().Add(600 * time.Millisecond)
-				d.accEmptyBlocks = 0
-				d.log.Info("sequencer delay next action 600ms and reset accEmptyBlocks")
-			}
-			d.log.Info("sequencer started building new block", "payload_id", buildingID, "l2_parent_block", parent, "l2_parent_block_time", parent.Time)
+			d.log.Info("sequencer started building new block", "duration", time.Since(start).Milliseconds(), "payload_id", buildingID, "l2_parent_block", parent, "l2_parent_block_time", parent.Time)
 			d.metrics.RecordSequencerStepTime("startBuildBlock", time.Since(start))
 		}
 		return nil, nil

@@ -144,6 +144,7 @@ func confirmPayload(
 	} else {
 		start := time.Now()
 		envelope, err = eng.GetPayload(ctx, payloadInfo)
+		log.Info("eng.Getpayload", "duration", time.Since(start).Milliseconds(), "id", payloadInfo.ID)
 		metrics.RecordSequencerStepTime("getPayload", time.Since(start))
 	}
 	if err != nil {
@@ -173,6 +174,7 @@ func confirmPayload(
 	if status.Status != eth.ExecutionValid {
 		return nil, BlockInsertTemporaryErr, eth.NewPayloadErr(payload, status)
 	}
+	log.Info("eng.Newpayload", "duration", time.Since(start).Milliseconds(), "id", payloadInfo.ID)
 	metrics.RecordSequencerStepTime("newPayload", time.Since(start))
 
 	fc.HeadBlockHash = payload.BlockHash
@@ -201,6 +203,7 @@ func confirmPayload(
 	if fcRes.PayloadStatus.Status != eth.ExecutionValid {
 		return nil, BlockInsertPayloadErr, eth.ForkchoiceUpdateErr(fcRes.PayloadStatus)
 	}
+	log.Info("eng.FCUHead", "duration", time.Since(start).Milliseconds(), "id", payloadInfo.ID)
 	metrics.RecordSequencerStepTime("forkChoiceUpdateHeads", time.Since(start))
 	log.Info("inserted block", "hash", payload.BlockHash, "number", uint64(payload.BlockNumber),
 		"state_root", payload.StateRoot, "timestamp", uint64(payload.Timestamp), "parent", payload.ParentHash,
