@@ -122,7 +122,7 @@ func (d *Sequencer) StartBuildingBlock(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start building on top of L2 chain %s, error (%d): %w", l2Head, errTyp, err)
 	}
-	log.Info("eng.FCUAddr", "duration", time.Since(start).Milliseconds(), "parent", l2Head.Hash)
+	log.Info("eng.FCUAttr", "duration", time.Since(start).Milliseconds(), "parent", l2Head.Hash)
 	d.metrics.RecordSequencerStepTime("forkChoiceUpdateAttributes", time.Since(start))
 	return nil
 }
@@ -254,7 +254,7 @@ func (d *Sequencer) RunNextSequencerAction(ctx context.Context, agossip async.As
 		} else {
 			payload := envelope.ExecutionPayload
 			d.attrBuilder.CachePayloadByHash(envelope)
-			d.log.Info("sequencer successfully built a new block", "duration", time.Since(start).Milliseconds(), "block", payload.ID(), "time", uint64(payload.Timestamp), "txs", len(payload.Transactions))
+			d.log.Info("debug-perf-prefix sequencer successfully built a new block", "duration", time.Since(start), "block", payload.ID(), "parent", payload.ParentID(), "time", uint64(payload.Timestamp), "txs", len(payload.Transactions))
 			return envelope, nil
 		}
 	} else {
@@ -277,7 +277,7 @@ func (d *Sequencer) RunNextSequencerAction(ctx context.Context, agossip async.As
 			}
 		} else {
 			parent, buildingID, _ := d.engine.BuildingPayload() // we should have a new payload ID now that we're building a block
-			d.log.Info("sequencer started building new block", "duration", time.Since(start).Milliseconds(), "payload_id", buildingID, "l2_parent_block", parent, "l2_parent_block_time", parent.Time)
+			d.log.Info("debug-perf-prefix sequencer started building new block", "duration", time.Since(start), "payload_id", buildingID, "l2_parent_block", parent, "l2_parent_block_time", parent.Time)
 			d.metrics.RecordSequencerStepTime("startBuildBlock", time.Since(start))
 		}
 		return nil, nil
