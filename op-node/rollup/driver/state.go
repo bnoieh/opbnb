@@ -451,6 +451,7 @@ func (s *Driver) eventLoop() {
 				return
 			} else if err != nil && errors.Is(err, derive.NotEnoughData) {
 				stepAttempts = 0 // don't do a backoff for this error
+				s.log.Warn("d-f Derivation process NotEnoughData error", "attempts", stepAttempts, "err", err)
 				reqStep()
 				continue
 			} else if err != nil {
@@ -458,6 +459,7 @@ func (s *Driver) eventLoop() {
 				reqStep()
 				continue
 			} else {
+				s.log.Warn("d-f Derivation process no error", "attempts", stepAttempts)
 				stepAttempts = 0
 				reqStep() // continue with the next step if we can
 			}
@@ -512,17 +514,20 @@ func (s *Driver) syncStep(ctx context.Context) error {
 	// this was a no-op(except correcting invalid state when backupUnsafe is empty but TryBackupUnsafeReorg called).
 	if fcuCalled, err := s.engineController.TryBackupUnsafeReorg(ctx); fcuCalled {
 		// If we needed to perform a network call, then we should yield even if we did not encounter an error.
+		s.log.Warn("d-f Derivation TryBackupUnsafeReorg error", "err", err)
 		return err
 	}
 	// If we don't need to call FCU, keep going b/c this was a no-op. If we needed to
 	// perform a network call, then we should yield even if we did not encounter an error.
 	if err := s.engineController.TryUpdateEngine(ctx); !errors.Is(err, derive.ErrNoFCUNeeded) {
+		s.log.Warn("d-f Derivation TryUpdateEngine error", "err", err)
 		return err
 	}
 	// Trying unsafe payload should be done before safe attributes
 	// It allows the unsafe head to move forward while the long-range consolidation is in progress.
 	if err := s.clSync.Proceed(ctx); err != io.EOF {
 		// EOF error means we can't process the next unsafe payload. Then we should process next safe attributes.
+		s.log.Warn("d-f Derivation clSync Proceed error", "err", err)
 		return err
 	}
 	s.metrics.SetDerivationIdle(false)

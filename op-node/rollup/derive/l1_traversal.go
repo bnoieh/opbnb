@@ -80,7 +80,7 @@ func (l1t *L1Traversal) AdvanceL1Block(ctx context.Context) error {
 		// the sysCfg changes should always be formatted correctly.
 		return NewCriticalError(fmt.Errorf("failed to update L1 sysCfg with receipts from block %s: %w", nextL1Origin, err))
 	}
-
+	l1t.log.Warn("d-f Derivation AdvanceL1Block succeed", "next", nextL1Origin)
 	l1t.block = nextL1Origin
 	l1t.done = false
 	return nil

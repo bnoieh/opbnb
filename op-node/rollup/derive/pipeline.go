@@ -129,6 +129,7 @@ func (dp *DerivationPipeline) Step(ctx context.Context) error {
 
 	// if any stages need to be reset, do that first.
 	if dp.resetting < len(dp.stages) {
+		dp.log.Warn("d-f Derivation resetting", "resetting", dp.resetting)
 		if err := dp.stages[dp.resetting].Reset(ctx, dp.eng.Origin(), dp.eng.SystemConfig()); err == io.EOF {
 			dp.log.Debug("reset of stage completed", "stage", dp.resetting, "origin", dp.eng.Origin())
 			dp.resetting += 1
@@ -136,6 +137,7 @@ func (dp *DerivationPipeline) Step(ctx context.Context) error {
 		} else if err != nil {
 			return fmt.Errorf("stage %d failed resetting: %w", dp.resetting, err)
 		} else {
+			dp.log.Warn("d-f Derivation resetting succeed", "resetting", dp.resetting)
 			return nil
 		}
 	}
@@ -143,12 +145,15 @@ func (dp *DerivationPipeline) Step(ctx context.Context) error {
 	// Now step the engine queue. It will pull earlier data as needed.
 	if err := dp.eng.Step(ctx); err == io.EOF {
 		// If every stage has returned io.EOF, try to advance the L1 Origin
-		return dp.traversal.AdvanceL1Block(ctx)
+		err = dp.traversal.AdvanceL1Block(ctx)
+		dp.log.Warn("d-f Derivation eng.step AdvanceL1Block", "err", err)
+		return err
 	} else if errors.Is(err, EngineELSyncing) {
 		return err
 	} else if err != nil {
 		return fmt.Errorf("engine stage failed: %w", err)
 	} else {
+		dp.log.Warn("d-f Derivation eng.step succeed")
 		return nil
 	}
 }

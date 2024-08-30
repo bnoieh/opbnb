@@ -185,11 +185,13 @@ func (eq *EngineQueue) Step(ctx context.Context) error {
 	// this was a no-op(except correcting invalid state when backupUnsafe is empty but TryBackupUnsafeReorg called).
 	if fcuCalled, err := eq.ec.TryBackupUnsafeReorg(ctx); fcuCalled {
 		// If we needed to perform a network call, then we should yield even if we did not encounter an error.
+		eq.log.Warn("d-f Derivation EngineQueue Step TryBackupUnsafeReorg", "err", err)
 		return err
 	}
 	// If we don't need to call FCU, keep going b/c this was a no-op. If we needed to
 	// perform a network call, then we should yield even if we did not encounter an error.
 	if err := eq.ec.TryUpdateEngine(ctx); !errors.Is(err, ErrNoFCUNeeded) {
+		eq.log.Warn("d-f Derivation EngineQueue Step TryUpdateEngine", "err", err)
 		return err
 	}
 	if eq.isEngineSyncing() {
@@ -197,6 +199,7 @@ func (eq *EngineQueue) Step(ctx context.Context) error {
 		return EngineELSyncing
 	}
 	if err := eq.attributesHandler.Proceed(ctx); err != io.EOF {
+		eq.log.Warn("d-f Derivation EngineQueue Step Proceed", "err", err)
 		return err // if nil, or not EOF, then the attribute processing has to be revisited later.
 	}
 	if eq.lastNotifiedSafeHead != eq.ec.SafeL2Head() {
@@ -217,15 +220,19 @@ func (eq *EngineQueue) Step(ctx context.Context) error {
 	}
 
 	newOrigin := eq.prev.Origin()
+	eq.log.Warn("d-f Derivation EngineQueue Step newOrigin", "newOrigin", newOrigin, "eq", eq.origin)
 	// Check if the L2 unsafe head origin is consistent with the new origin
 	if err := eq.verifyNewL1Origin(ctx, newOrigin); err != nil {
+		eq.log.Warn("d-f Derivation EngineQueue Step verifyNewL1Origin", "err", err)
 		return err
 	}
 	eq.origin = newOrigin
 
 	if next, err := eq.prev.NextAttributes(ctx, eq.ec.PendingSafeL2Head()); err == io.EOF {
+		eq.log.Warn("d-f Derivation EngineQueue Step NextAttributes", "EOF", err)
 		return io.EOF
 	} else if err != nil {
+		eq.log.Warn("d-f Derivation EngineQueue Step NextAttributes", "err", err)
 		return err
 	} else {
 		eq.attributesHandler.SetAttributes(next)
