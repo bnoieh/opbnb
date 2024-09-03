@@ -91,9 +91,9 @@ func (s *EngineAPIClient) ForkchoiceUpdate(ctx context.Context, fc *eth.Forkchoi
 	start := time.Now()
 	err := s.RPC.CallContext(fcCtx, &result, string(method), fc, attributes)
 	if attributes != nil {
-		llog.Info("debug-perf-prefix inner eng.FCUAttr", "duration", time.Since(start), "parent", fc.HeadBlockHash)
+		llog.Error("debug-perf-prefix inner eng.FCUAttr", "duration", time.Since(start), "parent", fc.HeadBlockHash)
 	} else {
-		llog.Info("debug-perf-prefix inner eng.FCUHead", "duration", time.Since(start), "hash", fc.HeadBlockHash)
+		llog.Error("debug-perf-prefix inner eng.FCUHead", "duration", time.Since(start), "hash", fc.HeadBlockHash)
 	}
 	if err == nil {
 		tlog.Trace("Shared forkchoice-updated signal")
@@ -140,7 +140,7 @@ func (s *EngineAPIClient) NewPayload(ctx context.Context, payload *eth.Execution
 	default:
 		return nil, fmt.Errorf("unsupported NewPayload version: %s", method)
 	}
-	e.Info("debug-perf-prefix inner eng.NewPayload", "duration", time.Since(start), "block", payload.ID())
+	e.Error("debug-perf-prefix inner eng.NewPayload", "duration", time.Since(start), "block", payload.ID())
 
 	e.Trace("Received payload execution result", "status", result.Status, "latestValidHash", result.LatestValidHash, "message", result.ValidationError)
 	if err != nil {
@@ -161,7 +161,7 @@ func (s *EngineAPIClient) GetPayload(ctx context.Context, payloadInfo eth.Payloa
 	method := s.evp.GetPayloadVersion(payloadInfo.Timestamp)
 	start := time.Now()
 	err := s.RPC.CallContext(ctx, &result, string(method), payloadInfo.ID)
-	e.Info("debug-perf-prefix inner eng.GetPayload", "duration", time.Since(start), "payload", payloadInfo.ID)
+	e.Error("debug-perf-prefix inner eng.GetPayload", "duration", time.Since(start), "payload", payloadInfo.ID)
 	if err != nil {
 		e.Warn("Failed to get payload", "payload_id", payloadInfo.ID, "err", err)
 		if rpcErr, ok := err.(rpc.Error); ok {
