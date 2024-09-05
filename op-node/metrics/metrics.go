@@ -50,6 +50,7 @@ type Metricer interface {
 	RecordUnsafePayloadsBuffer(length uint64, memSize uint64, next eth.BlockID)
 	RecordDerivedBatches(batchType string)
 	CountSequencedTxs(count int)
+	CountEmptyBlocks(count int)
 	RecordL1ReorgDepth(d uint64)
 	RecordSequencerInconsistentL1Origin(from eth.BlockID, to eth.BlockID)
 	RecordSequencerReset()
@@ -129,6 +130,7 @@ type Metrics struct {
 	L1ReorgDepth prometheus.Histogram
 
 	TransactionsSequencedTotal prometheus.Counter
+	EmptyBlockTotal prometheus.Counter
 
 	PlasmaMetrics plasma.Metricer
 
@@ -235,6 +237,11 @@ func NewMetrics(procName string) *Metrics {
 			Namespace: ns,
 			Name:      "transactions_sequenced_total",
 			Help:      "Count of total transactions sequenced",
+		}),
+		EmptyBlockTotal: factory.NewGauge(prometheus.GaugeOpts{
+			Namespace: ns,
+			Name:      "empty_block_total",
+			Help:      "Count of total empty blocks",
 		}),
 
 		PeerCount: factory.NewGauge(prometheus.GaugeOpts{
@@ -483,6 +490,10 @@ func (m *Metrics) CountSequencedTxs(count int) {
 	m.TransactionsSequencedTotal.Add(float64(count))
 }
 
+func (m *Metrics) CountEmptyBlocks(count int) {
+	m.EmptyBlockTotal.Add(float64(count))
+}
+
 func (m *Metrics) RecordL1ReorgDepth(d uint64) {
 	m.L1ReorgDepth.Observe(float64(d))
 }
@@ -693,6 +704,9 @@ func (n *noopMetricer) RecordDerivedBatches(batchType string) {
 }
 
 func (n *noopMetricer) CountSequencedTxs(count int) {
+}
+
+func (n *noopMetricer) CountEmptyBlocks(count int) {
 }
 
 func (n *noopMetricer) RecordL1ReorgDepth(d uint64) {

@@ -16,6 +16,7 @@ import (
 type EngineMetrics interface {
 	RecordSequencingError()
 	CountSequencedTxs(count int)
+	CountEmptyBlocks(count int)
 
 	RecordSequencerBuildingDiffTime(duration time.Duration)
 	RecordSequencerSealingTime(duration time.Duration)
@@ -78,6 +79,9 @@ func (m *MeteredEngine) ConfirmPayload(ctx context.Context, agossip async.AsyncG
 
 	txnCount := len(payload.ExecutionPayload.Transactions)
 	m.metrics.CountSequencedTxs(txnCount)
+	if txnCount == 1 {
+		m.metrics.CountEmptyBlocks(1)
+	}
 
 	ref := m.inner.UnsafeL2Head()
 
