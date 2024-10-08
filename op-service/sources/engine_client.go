@@ -90,7 +90,13 @@ func (s *EngineAPIClient) ForkchoiceUpdate(ctx context.Context, fc *eth.Forkchoi
 	defer cancel()
 	var result eth.ForkchoiceUpdatedResult
 	method := s.evp.ForkchoiceUpdatedVersion(attributes)
+	start := time.Now()
 	err := s.RPC.CallContext(fcCtx, &result, string(method), fc, attributes)
+	if attributes != nil {
+		llog.Info("perf-trace eng.FCUAttr", "duration", time.Since(start), "parent", fc.HeadBlockHash)
+	} else {
+		llog.Error("perf-trace eng.FCUHead", "duration", time.Since(start), "hash", fc.HeadBlockHash)
+	}
 	if err == nil {
 		tlog.Trace("Shared forkchoice-updated signal")
 		if attributes != nil { // block building is optional, we only get a payload ID if we are building a block
@@ -127,6 +133,7 @@ func (s *EngineAPIClient) NewPayload(ctx context.Context, payload *eth.Execution
 	var result eth.PayloadStatusV1
 
 	var err error
+	start := time.Now()
 	switch method := s.evp.NewPayloadVersion(uint64(payload.Timestamp)); method {
 	case eth.NewPayloadV3:
 		err = s.RPC.CallContext(execCtx, &result, string(method), payload, []common.Hash{}, parentBeaconBlockRoot)
@@ -135,7 +142,7 @@ func (s *EngineAPIClient) NewPayload(ctx context.Context, payload *eth.Execution
 	default:
 		return nil, fmt.Errorf("unsupported NewPayload version: %s", method)
 	}
-
+	e.Info("perf-trace eng.NewPayload", "duration", time.Since(start), "block", payload.ID())
 	e.Trace("Received payload execution result", "status", result.Status, "latestValidHash", result.LatestValidHash, "message", result.ValidationError)
 	if err != nil {
 		if strings.Contains(err.Error(), derive.ErrELSyncTriggerUnexpected.Error()) {
@@ -157,7 +164,9 @@ func (s *EngineAPIClient) GetPayload(ctx context.Context, payloadInfo eth.Payloa
 	e.Trace("getting payload")
 	var result eth.ExecutionPayloadEnvelope
 	method := s.evp.GetPayloadVersion(payloadInfo.Timestamp)
+	start := time.Now()
 	err := s.RPC.CallContext(ctx, &result, string(method), payloadInfo.ID)
+	e.Info("perf-trace eng.GetPayload", "duration", time.Since(start), "payload", payloadInfo.ID)
 	if err != nil {
 		e.Warn("Failed to get payload", "payload_id", payloadInfo.ID, "err", err)
 		if rpcErr, ok := err.(rpc.Error); ok {
