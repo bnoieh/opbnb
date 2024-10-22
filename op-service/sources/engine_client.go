@@ -196,7 +196,9 @@ func (s *EngineAPIClient) SealPayload(ctx context.Context, payloadInfo eth.Paylo
 	defer sCancel()
 	var result eth.SealPayloadResponse
 	method := s.evp.SealPayloadVersion(payloadInfo.Timestamp)
+	start := time.Now()
 	err := s.RPC.CallContext(sCtx, &result, string(method), payloadInfo.ID, fc, needPayload)
+	e.Info("perf-trace eng.SealPayload", "duration", time.Since(start), "payloadID", payloadInfo.ID)
 	if err != nil {
 		e.Error("Failed to seal payload", "payload_id", payloadInfo.ID, "err", err)
 		switch result.ErrStage {
