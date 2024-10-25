@@ -224,8 +224,11 @@ func (eq *EngineQueue) Step(ctx context.Context) error {
 	eq.origin = newOrigin
 
 	if next, err := eq.prev.NextAttributes(ctx, eq.ec.PendingSafeL2Head()); err == io.EOF {
+		eq.log.Debug("NextAttributes EOF", "err", err, "safe_head", eq.ec.SafeL2Head(),
+			"pending_safe_head", eq.ec.PendingSafeL2Head())
 		return io.EOF
 	} else if err != nil {
+		eq.log.Error("NextAttributes err", "err", err, "safe_head", eq.ec.SafeL2Head(), "pending_safe_head", eq.ec.PendingSafeL2Head())
 		return err
 	} else {
 		eq.attributesHandler.SetAttributes(next)

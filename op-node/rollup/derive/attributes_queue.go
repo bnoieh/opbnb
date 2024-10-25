@@ -61,6 +61,7 @@ func (aq *AttributesQueue) NextAttributes(ctx context.Context, parent eth.L2Bloc
 	if aq.batch == nil {
 		batch, isLastInSpan, err := aq.prev.NextBatch(ctx, parent)
 		if err != nil {
+			aq.log.Error("NextBatch", "err", err, "parent", parent)
 			return nil, err
 		}
 		aq.batch = batch
@@ -69,6 +70,7 @@ func (aq *AttributesQueue) NextAttributes(ctx context.Context, parent eth.L2Bloc
 
 	// Actually generate the next attributes
 	if attrs, err := aq.createNextAttributes(ctx, aq.batch, parent); err != nil {
+		aq.log.Error("createNextAttributes", "err", err, "parent", parent)
 		return nil, err
 	} else {
 		// Clear out the local state once we will succeed
