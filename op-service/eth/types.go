@@ -346,6 +346,8 @@ const (
 	ExecutionInvalidTerminalBlock ExecutePayloadStatus = "INVALID_TERMINAL_BLOCK"
 	// given payload is invalid
 	ExecutionInconsistent ExecutePayloadStatus = "INCONSISTENT"
+	// unknown
+	ExecutionUnknown ExecutePayloadStatus = "UNKNOWN"
 )
 
 type PayloadStatusV1 struct {

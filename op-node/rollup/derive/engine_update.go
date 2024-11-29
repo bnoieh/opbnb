@@ -302,7 +302,11 @@ func confirmPayloadCombined(
 		}
 	default:
 		if sealPayloadErr != nil || sealRes.PayloadStatus.Status != eth.ExecutionValid {
-			return nil, BlockInsertTemporaryErr, NewTemporaryError(fmt.Errorf("failed to seal payload, status: %s, err: %w", sealRes.PayloadStatus.Status, sealPayloadErr))
+			status := eth.ExecutionUnknown
+			if sealRes != nil {
+				status = sealRes.PayloadStatus.Status
+			}
+			return nil, BlockInsertTemporaryErr, NewTemporaryError(fmt.Errorf("failed to seal payload, status: %s, err: %w", status, sealPayloadErr))
 		}
 	}
 
