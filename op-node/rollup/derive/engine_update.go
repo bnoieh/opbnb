@@ -263,10 +263,13 @@ func confirmPayloadCombined(
 	sealRes := sealPayloadRet.res
 	errStage := sealPayloadRet.errStage
 	sealPayloadErr := sealPayloadRet.err
+	log.Info("debug-merge-api", "ret", sealPayloadRet, "stage", errStage, "err", sealPayloadErr)
 	switch errStage {
 	case eth.GetPayloadStage:
+		log.Error("debug-merge-api confirm payload case get payload")
 		return nil, BlockInsertTemporaryErr, fmt.Errorf("failed to get execution payload: %w", sealPayloadErr)
 	case eth.NewPayloadStage:
+		log.Error("debug-merge-api confirm payload case new payload")
 		if sealPayloadErr != nil {
 			return nil, BlockInsertTemporaryErr, fmt.Errorf("failed to insert execution payload: %w", sealPayloadErr)
 		}
@@ -283,6 +286,8 @@ func confirmPayloadCombined(
 			return nil, BlockInsertTemporaryErr, fmt.Errorf("failed to new payload, status: %s, validationError: %v", sealRes.PayloadStatus.Status, validationError)
 		}
 	case eth.ForkchoiceUpdatedStage:
+		log.Error("debug-merge-api confirm payload case fcu")
+
 		if sealPayloadErr != nil {
 			var inputErr eth.InputError
 			if errors.As(sealPayloadErr, &inputErr) {
@@ -309,6 +314,8 @@ func confirmPayloadCombined(
 			return nil, BlockInsertPayloadErr, fmt.Errorf("failed to forkchoice update, status: %s, validationError: %v", sealRes.PayloadStatus.Status, validationError)
 		}
 	default:
+		log.Error("debug-merge-api confirm payload case default")
+
 		if sealPayloadErr != nil {
 			return nil, BlockInsertTemporaryErr, NewTemporaryError(fmt.Errorf("failed to seal payload, err: %w", sealPayloadErr))
 		}

@@ -190,8 +190,10 @@ func (s *EngineAPIClient) SealPayload(ctx context.Context, payloadInfo eth.Paylo
 	err := s.RPC.CallContext(sCtx, &result, string(method), payloadInfo.ID, fc, needPayload)
 	if err != nil {
 		e.Error("Failed to seal payload", "payload_id", payloadInfo.ID, "err", err)
+		e.Info("debug-merge-api", "result", result, "result.errstage", result.ErrStage, "g", eth.GetPayloadStage, "n", eth.NewPayloadStage, "f", eth.ForkchoiceUpdatedStage)
 		switch result.ErrStage {
 		case eth.GetPayloadStage:
+			e.Error("debug-merge-api case get payload")
 			if rpcErr, ok := err.(rpc.Error); ok {
 				code := eth.ErrorCode(rpcErr.ErrorCode())
 				switch code {
@@ -228,6 +230,7 @@ func (s *EngineAPIClient) SealPayload(ctx context.Context, payloadInfo eth.Paylo
 			}
 			return nil, result.ErrStage, err
 		default:
+			e.Error("debug-merge-api seal payload case default")
 			return nil, result.ErrStage, err
 		}
 	}
